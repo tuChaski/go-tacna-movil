@@ -1,4 +1,4 @@
-# Rutas en Tiempo Real — App Móvil
+# go-tacna — App Móvil
 
 App Android del proyecto, con dos modos:
 
@@ -11,7 +11,7 @@ App Android del proyecto, con dos modos:
 
 ## ⚠️ Estado actual
 
-**Este repositorio está vacío.** La app vive hoy en el monorepo `rutas-en-tiempo-real-frontend/mobile/`, y está en el **esqueleto de Expo**: la pantalla inicial es la de ejemplo del template, sin mapa ni GPS.
+**Este repositorio está vacío.** La app vive hoy en el monorepo `go-tacna-frontend/mobile/`, y está en el **esqueleto de Expo**: la pantalla inicial es la de ejemplo del template, sin mapa ni GPS.
 
 Este README describe el **diseño objetivo** y la estructura que ya existe.
 
@@ -151,11 +151,11 @@ El límite del servidor es de **60 peticiones por minuto por micro**, así que e
 
 Este repo **no** define los contratos; los consume.
 
-- **Endpoints de la API** → `rutas-en-tiempo-real-docs/docs/openapi.yaml`
-- **Eventos WebSocket y claims del JWT** → `rutas-en-tiempo-real-docs`
-- **Certificados HTTPS** → `rutas-en-tiempo-real-infraestructura`
+- **Endpoints de la API** → `go-tacna-docs/docs/openapi.yaml`
+- **Eventos WebSocket y claims del JWT** → `go-tacna-docs`
+- **Certificados HTTPS** → `go-tacna-infraestructura`
 
-> **El GPS requiere HTTPS.** Android no permite ubicación en una conexión no segura fuera de `localhost`. El certificado lo emite Let's Encrypt desde `rutas-en-tiempo-real-infraestructura`.
+> **El GPS requiere HTTPS.** Android no permite ubicación en una conexión no segura fuera de `localhost`. El certificado lo emite Let's Encrypt desde `go-tacna-infraestructura`.
 
 Si un contrato cambia, se cambia primero en `docs/`.
 
@@ -196,10 +196,10 @@ Si un contrato cambia, se cambia primero en `docs/`.
 
 | Repositorio | Propósito |
 |---|---|
-| `rutas-en-tiempo-real-movil` | Este repositorio. App Android. |
-| `rutas-en-tiempo-real-backend` | API Laravel y servidor de tiempo real. |
-| `rutas-en-tiempo-real-frontend` | Web pública y panel de administración. |
-| `rutas-en-tiempo-real-infraestructura` | Docker, k3s, Traefik y despliegue. |
-| `rutas-en-tiempo-real-docs` | Informe, requisitos, contratos y cronograma. |
+| `go-tacna-movil` | Este repositorio. App Android. |
+| `go-tacna-backend` | API Laravel y servidor de tiempo real. |
+| `go-tacna-frontend` | Web pública y panel de administración. |
+| `go-tacna-infraestructura` | Docker, k3s, Traefik y despliegue. |
+| `go-tacna-docs` | Informe, requisitos, contratos y cronograma. |
 
-Tablero de tareas: [Planificación rutas-en-tiempo-real](https://github.com/orgs/tuChaski/projects/1)
+Tablero de tareas: [Planificación go-tacna](https://github.com/orgs/go-tacna/projects/1)
