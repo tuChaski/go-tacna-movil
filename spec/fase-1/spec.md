@@ -1,10 +1,10 @@
 # Spec: Fase 1 — Base Técnica, Entorno Móvil y Contratos de Integración
 
-**Rama prevista:** `feature/mobile-phase-1-base`
+**Rama activa:** `feature/mobile-phase-1-base`
 **Repositorio:** `mobile-app`
 **Fase:** 1 — Base Técnica, Entorno Móvil y Contratos
 **Estado:** Autorizado para el alcance implementable
-**Plan técnico:** `specs/fase_1_base/plan.md`
+**Plan técnico:** `spec/fase-1/plan.md`
 
 ---
 
@@ -42,7 +42,7 @@ Esta fase no incluye:
 | F1-C02 | Contratos y modelos | Definición de interfaces TypeScript para rutas, paraderos, respuestas/errores HTTP y eventos WebSocket de telemetría. |
 | F1-C03 | Cliente HTTP base | Configuración centralizada de cliente HTTP (`baseURL`, `timeout`, interceptores y normalización de errores). |
 | F1-C04 | Cliente WebSocket base | Gestor centralizado de conexión, suscripción por canal/*room*, desconexión y reconexión inicial. |
-| F1-C05 | Verificación de humo | Comprobación de compilación en Android, consulta de prueba de catálogo y recepción/validación de evento de telemetría. |
+| F1-C05 | Verificación de humo | Arranque con `npx expo start`, bundle servido para Expo Go, consulta de catálogo y recepción/validación de evento de telemetría (mocks contractuales cuando no haya servicios). |
 
 ### 2.1. Roles y actores en esta fase
 
@@ -84,10 +84,10 @@ El código deberá organizarse en `src/features/{passenger,driver,auth,extras}`,
 ### 4.2. Modelos y contratos — F1-C02
 
 **FR-004 — Modelos de catálogo geoespacial**
-El módulo de tipos deberá definir estructuras para coordenadas, rutas (identificador, código, nombre, color/estilo visual y trazado de ida/vuelta) y paraderos (identificador, nombre, coordenadas y orden), alineadas con el contrato del backend.
+El módulo de tipos define coordenadas y rutas con los campos oficiales `id`, `empresa_id`, `nombre_ruta`, `activo` y `trazado_ruta` (GeoJSON `LineString`, pares `[lng, lat]`). No se inventan `code`, `colorHex`, trazados separados ni campos de paraderos: OpenAPI no publica un recurso de paraderos y esa integración queda pendiente (`Stop = never`).
 
 **FR-005 — Modelos de telemetría en tiempo real**
-El módulo de tipos deberá definir las estructuras de eventos WebSocket para emisión de ubicación de unidad (`unitId`, `routeId`, `lat`, `lng`, `speed`, `heading`, `timestamp`) y sincronización de unidades activas en una ruta, sin añadir campos no documentados como si fueran oficiales.
+El módulo define el payload HTTP de Node `{lat, lng, speed}` y, por separado, `ConductorPosicionInput` de OpenAPI. Socket.IO recibe `route:joined` con `{rutaId, micros}` y `micro:position` con `{microId, rutaId, lat, lng, speed, status, lastSeen}`; `lastSeen` es un entero de milisegundos y `speed` se expresa en m/s. Las emisiones del pasajero son `route:join` / `route:leave` con un entero positivo, no objetos. No se emite GPS por WS ni se implementa el flujo conductor.
 
 ### 4.3. Comunicación HTTP y WebSocket — F1-C03 y F1-C04
 
@@ -113,8 +113,9 @@ En esta fase no se exigen pantallas funcionales finales de negocio, pero sí la 
 
 | Elemento | Ubicación | Propósito en Fase 1 |
 |---|---|---|
-| Navegación raíz | `src/navigation/` | Estructura inicial del contenedor de navegación sin lógica de negocio. |
-| Punto de entrada | `src/App.tsx` | Inicialización de configuración, servicios base y contenedor raíz. |
+| Navegación raíz | `src/app/_layout.tsx` | Stack de Expo Router según `AGENTS.md`, sin segundo contenedor. |
+| Utilidades de navegación | `src/navigation/` | Directorio reservado para utilidades compartidas de fases siguientes. |
+| Configuración inicial | `src/components/ConfigurationNotice.tsx` | Aviso de configuración inválida en desarrollo; las conexiones son explícitas, sin tráfico al arrancar. |
 | Configuración | `src/config/` | Lectura y validación de variables de entorno y constantes base. |
 
 ---
@@ -133,10 +134,32 @@ Ante cualquier discrepancia entre la documentación de contratos, la implementac
 |---|---|---|
 | Catálogo de rutas | REST (`GET`) | Verificación inicial de conexión HTTP y tipado de rutas. |
 | Paraderos de ruta | REST (`GET`) | Verificación inicial de tipado de paraderos asociados a ruta. |
-| Actualización de ubicación | WebSocket (`emit`) | Verificación de estructura de payload de emisión de unidad. |
-| Sincronización de unidades en ruta | WebSocket (`on`) | Verificación de recepción y tipado de estado de unidades en vivo. |
+| Actualización de ubicación | HTTP | Tipos separados para Node y Core; integración de envío detenida por discrepancia contractual. |
+| Sincronización de unidades en ruta | Socket.IO (`on`) | `route:joined`, `micro:position`, `micro:offline`, `micro:stopped`. |
 
 ### 6.3. Dependencias y brechas contractuales
+
+**Registro del 24/11/2026 (actualizado):** se consultaron en solo lectura
+`../go-tacna-docs/contratos/{openapi.yaml,eventos-websocket.md,payload-gps.md,jwt-claims.md}`,
+`../go-tacna-backend/realtime/src/` y el Compose/Nginx de infraestructura.
+Los directorios locales conservan el prefijo `go-tacna-`; el paquete móvil se llama
+`rutas-en-tiempo-real-movil`. No se modifican referencias ni `contexto.md`.
+
+- Catálogo confirmado: `GET /api/v1/rutas`, respuesta Laravel `{data, links, meta, success}`.
+- No hay endpoint/schema de paraderos en OpenAPI: solo esa integración se mantiene detenida.
+- Socket.IO 4 usa `/socket.io` y rooms `ruta:{id}`; el servidor no autentica el socket.
+  El cliente restaura suscripciones tras reconectar y valida estrictamente los eventos.
+- Discrepancia de tracking: OpenAPI dirige `/api/v1/tracking/position` a Core y documenta
+  `201` con `PosicionGpsResponse`, con `latitud/longitud` (alias `lat/lng`). Node
+  implementa `/tracking/position` con `{lat,lng,speed}` y `202 {ok:true}`. Nginx local
+  dirige `/api/` al Gateway y `/socket.io/` a Node, sin ruta pública de tracking hacia Node.
+  No se implementa un envío GPS que mezcle ambos contratos.
+- El middleware de Node acepta claims actuales `rol/micro_id/ruta_id` y los antiguos
+  `role/microId/rutaId`. La app no firma tokens ni incorpora `JWT_SECRET`.
+- API/BD reales no disponibles: Docker sin daemon; faltan los directorios de Core,
+  Gateway y ubicación que monta Compose. Se valida con mocks contractuales.
+- La app solo consume API y Socket.IO. PostgreSQL/PostGIS permanece tras el backend;
+  no se incluyen credenciales ni conexiones de BD en el móvil.
 
 - Si algún endpoint o evento en tiempo real no está publicado o tiene campos distintos en el entorno de desarrollo, se registrará en el seguimiento de la fase sin inventar esquemas ficticios como definitivos.
 - La autenticación final con tokens y roles se integrará conforme al contrato de autenticación vigente en la fase correspondiente.
@@ -157,12 +180,12 @@ Ante cualquier discrepancia entre la documentación de contratos, la implementac
 
 ## 8. Criterios de aceptación
 
-1. El proyecto React Native + TypeScript estricto compila y ejecuta en Android (dispositivo físico o emulador) sin fallos de arranque.
+1. El proyecto React Native + TypeScript estricto inicia Metro mediante `npx expo start` y sirve el bundle para Expo Go. La ejecución visual en un dispositivo se registra aparte; no se generan APK ni builds nativos para probar.
 2. El chequeo de tipos de TypeScript y el linter finalizan sin errores.
 3. Existen la estructura de carpetas y los archivos base en `src/features/*`, `src/services/*`, `src/store`, `src/navigation`, `src/config`, `src/utils` y `src/types`.
-4. Existen los tipos TypeScript de rutas, paraderos, respuestas/errores HTTP y eventos WebSocket de telemetría alineados con el contrato.
+4. Existen tipos y validadores alineados de rutas, GeoJSON, paginación y eventos Socket.IO; la falta de contrato de paraderos y la discrepancia de envío GPS se documentan sin esquemas supuestos.
 5. El cliente HTTP centralizado y el gestor WebSocket centralizado están implementados sin duplicar instancias en otros módulos.
-6. Una consulta de prueba al endpoint de rutas/paraderos en entorno de desarrollo y la recepción/validación de un evento WebSocket de prueba se resuelven conforme al tipado definido.
+6. La consulta de rutas y recepción/validación de telemetría se prueban contra servicios reales disponibles o mocks del contrato, identificando explícitamente el entorno. La integración real permanece abierta si los servicios no están accesibles.
 7. Ante un error de red o servidor no disponible, la aplicación maneja el fallo de forma controlada sin *crash*.
 8. Los cambios se realizan en una rama `feature/*` y cumplen las convenciones de idioma y commits de `constitution.md`.
 
@@ -182,8 +205,8 @@ Ante cualquier discrepancia entre la documentación de contratos, la implementac
 ## 10. Pendientes de definición antes de avanzar a Fase 2
 
 1. Confirmar la URL accesible del backend y del servidor WebSocket en el entorno de pruebas/desarrollo para ejecutar pruebas integradas reales.
-2. Verificar en el contrato/backend los nombres exactos de campos (por ejemplo, `camelCase` vs. `snake_case`) y formatos de trazado geométrico (`LINESTRING` / GeoJSON / arreglo de puntos).
-3. Confirmar el formato exacto de autenticación (si aplica token Bearer en cabecera HTTP y/o *handshake* de WebSocket) para integrarlo en los interceptores y gestor de sockets.
+2. Obtener contrato de paraderos y resolver el destino público de tracking (Core frente a Node).
+3. Verificar las respuestas reales de Core/Gateway y eventos Node con servicios activos. Rutas públicas y socket sin auth están documentados; el envío GPS sí requiere JWT Bearer y queda sin integración hasta resolver el destino.
 
 ---
 
