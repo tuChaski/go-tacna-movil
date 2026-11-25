@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/ui": "~57.0.26",
     "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.33",
     "expo-constants": "~57.0.24",
     "expo-device": "~57.0.2",
@@ -28,10 +29,14 @@
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.10.1"
+    "react-native-worklets": "0.10.1",
+    "socket.io-client": "^4.8.4"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.2",
+    "prettier": "^3.10.1",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -40,7 +45,11 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write src tests *.json *.js",
+    "format:check": "prettier --check src tests *.json *.js",
+    "test:smoke": "tsc -p tsconfig.smoke.json && node --test tests/*.test.cjs"
   },
   "private": true
 }
