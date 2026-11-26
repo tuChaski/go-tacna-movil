@@ -4,7 +4,7 @@
 **Rama:** `feature/mobile-phase-2-ui-ux`
 **Fase:** 2 — Diseño UI/UX, Flujos de Interacción y Estados de Pantalla
 **Estado:** Autorizado para ejecución progresiva
-**Especificación funcional:** `specs/fase_2_ui_ux/spec.md`
+**Especificación funcional:** `spec/fase-2/spec.md`
 
 ## 0. Documentos de referencia y estado previo
 
@@ -12,15 +12,15 @@ Este plan se apoya en las siguientes fuentes de verdad:
 
 | Documento | Uso |
 |---|---|
-| `specs/constitution.md` | Principios, stack, arquitectura, seguridad, pruebas y convenciones obligatorias[cite: 1]. |
-| `specs/fase_1_base/spec.md` y `plan.md` | Base técnica, estructura de carpetas, tipos y clientes centrales de Fase 1[cite: 1]. |
-| `specs/fase_2_ui_ux/spec.md` | Alcance, requisitos funcionales y criterios de aceptación de la Fase 2. |
+| `spec/contitution.md` | Principios, stack, arquitectura, seguridad, pruebas y convenciones obligatorias[cite: 1]. |
+| `spec/fase-1/spec.md` y `plan.md` | Base técnica, estructura de carpetas, tipos y clientes centrales de Fase 1[cite: 1]. |
+| `spec/fase-2/spec.md` | Alcance, requisitos funcionales y criterios de aceptación de la Fase 2. |
 
 ### 0.1. Estado de la Fase 1 y prerrequisitos
 
 Antes de implementar las interfaces de la Fase 2, deben estar disponibles:
 
-- Proyecto React Native + TypeScript estricto inicializado y compilando en Android[cite: 1].
+- Base React Native + TypeScript estricto de Fase 1 integrada en `origin/develop` (`37f2c70`, PR #1). Se valida mediante Expo/OTA, sin APK ni builds nativos.
 - Estructura de carpetas de `constitution.md` creada (`src/features/{passenger,driver,auth,extras}`, `src/components`, `src/navigation`, `src/types`, etc.)[cite: 1].
 - Tipos base de catálogo y telemetría definidos en `src/types/`[cite: 1].
 
@@ -45,10 +45,16 @@ Se mantiene la arquitectura modular y separación de responsabilidades de `const
 |---|---|---|
 | Interfaz móvil | React Native | Base de Fase 1[cite: 1] |
 | Lenguaje | TypeScript (modo estricto) | Base de Fase 1[cite: 1] |
-| Navegación | React Navigation (o navegación centralizada definida) | Integración en Fase 2[cite: 1] |
+| Navegación | Expo Router, según AGENTS.md | Rutas y stack declarados en `src/navigation/` |
 | Estilos y tokens | Sistema de diseño / temas / estilos tipados | Definición en Fase 2 |
 
 No se incorporan dependencias nuevas sin justificación técnica y aprobación conforme a `constitution.md`[cite: 1].
+
+Para el alcance autorizado se añade `@expo-google-fonts/inter` (tipografía de la
+guía T049, carga en ejecución compatible con Expo Go) y herramientas de prueba:
+Jest, jest-expo y React Native Testing Library. No se añaden módulos nativos de
+mapas, geolocalización ni bottom sheet. `Modal` y `PanResponder` resuelven las
+interacciones base. Se conserva el cliente HTTP/Socket.IO/storage de Fase 1 sin cambios.
 
 ## 3. Alcance funcional de la fase
 
@@ -103,6 +109,26 @@ En `src/components/` (y configuración visual correspondiente en `src/config/` o
 
 Todas las vistas principales deben modelar explícitamente un estado de vista tipado (por ejemplo, `ScreenStatus = 'loading' | 'ready' | 'empty' | 'permission_denied' | 'offline' | 'error'`) para evitar renders inconsistentes o pantallas vacías sin explicación.
 
+La implementación usa `permission-denied` (con guion), coherente con la Spec.
+`src/types/ui.ts` concentra estados y textos; `src/dev/PreviewScreen.tsx` permite
+revisar ambos flujos con los seis estados desde `/ui-preview`, sin poner controles
+de diagnóstico dentro de la consola del conductor. La entrada se muestra en desarrollo.
+
+| Estado | Pasajero | Conductor |
+|---|---|---|
+| ready | Selector, mapa ilustrativo y ficha | Interruptor habilitado y temporizador local |
+| loading | Indicador y mensaje de carga | GPS buscando / red reconectando; inicio bloqueado |
+| empty | Ruta sin micros | Sin unidad asignada en el escenario; inicio bloqueado |
+| permission-denied | Explicación y continuar sin ubicación en la demo | Indicador sin permiso; inicio bloqueado |
+| offline | Sin ubicaciones/llegadas en vivo, reintento | Aviso y red sin conexión; un recorrido activo puede finalizar con confirmación |
+| error | Mensaje controlado y reintento | Red no disponible e inicio bloqueado |
+
+Las acciones de recuperación de la galería cambian solo el escenario de UI. No
+solicitan permisos nativos ni hacen peticiones de red. GPS/red/recorrido permanecen
+fuera del ScrollView del conductor. Cancelar el diálogo o el retorno de Android
+con el diálogo abierto conserva el recorrido; volver desde un recorrido activo
+también pide confirmación.
+
 ## 5. Estructura del proyecto
 
 ```text
@@ -147,9 +173,20 @@ Notas:
 
 En la Fase 2 se utilizan datos de ejemplo o estados simulados exclusivamente en el ámbito de presentación/prototipado de interfaz para validar flujos y estados visuales; no se deben tratar datos simulados como datos reales del sistema ni dejar lógica *mock* acoplada dentro de los componentes finales.
 
+Los fixtures están separados en `passenger/data/passengerPreview.ts` y reutilizan
+`Route`/`MicroPosition`. Los componentes reciben datos/acciones por props y los hooks
+mantienen exclusivamente estado de interacción. No hay ETA calculado: los rótulos
+se identifican como ejemplos y se ocultan para la unidad desactualizada. El punto
+de espera es un modelo local de presentación, sin inventar un contrato de paraderos.
+
 ## 7. Rutas y navegación
 
 `src/navigation/` centraliza la navegación entre los flujos definidos en esta fase y expone transiciones claras entre las vistas de pasajero, conductor y estados de soporte.
+
+`AppNavigator.tsx` declara el Stack de Expo Router y `routes.ts` concentra las rutas.
+`src/app/{passenger,driver,ui-preview}.tsx` adapta las pantallas de dominio. El acceso
+como invitado y la demostración del conductor se abren desde la bienvenida existente;
+esto no habilita transmisión ni sustituye autorización de roles de fases posteriores.
 
 ## 8. Alcance de conectividad
 
@@ -167,6 +204,12 @@ La Fase 2 no requiere conectividad continua a un servidor en vivo para operar su
 | Chequeo estático | Compilación TypeScript (`tsc --noEmit` / `tsc -b`) y linter (`ESLint`). |
 | Pruebas de componentes | Renderizado de componentes compartidos, tarjetas, controles de conductor y estados (`loading`, `empty`, `permission-denied`, `offline`, `error`). |
 | Pruebas de usabilidad | Sesión de prueba con 3–5 usuarios simulando consulta de pasajero e inicio/fin de recorrido de conductor, registrando fricciones y mejoras. |
+
+Se comprueban contraste ≥4.5:1 en combinaciones de texto normal, controles de 48dp,
+matriz en ambos flujos, tres toques, punto de espera, señal antigua sin ETA, cambio
+de ruta, inicio/finalización/cancelación/salida y limpieza del intervalo local.
+RNTL 14 usa render/eventos asíncronos; se prueba con su API instalada. Los mocks
+nativos de jest-expo no equivalen a evaluación visual, lector de pantalla o usuarios.
 
 ## 11. Secuencia de implementación
 
@@ -194,6 +237,34 @@ La Fase 2 no requiere conectividad continua a un servidor en vivo para operar su
 ## 12. Riesgos, bloqueos y decisiones pendientes
 
 ### 12.1. Bloqueos
+
+Registro 25/11/2026 actualizado: el acceso por navegador fue bloqueado inicialmente;
+la integración de Figma permite ahora lectura directa. Se identificaron sus ocho
+páginas y se inspeccionaron capturas del mapa, inicio de conductor y estado sin
+conexión. No se editó Figma. Se mantienen la guía T049 y documentación T051 como
+referencia. Se leyeron hallazgos T054/T095: las transiciones de inicio
+y finalización del conductor y el ocultamiento de ETA antiguo tienen pruebas en el
+móvil; esas comprobaciones no cierran los tickets del prototipo ni una nueva ronda
+de usabilidad. Falta ejecutar esta última con participantes y revisión física.
+
+Primera pasada estética: `AppHeader` y `AppIcon` compartidos, iconos Lucide ya
+instalados, badges sin símbolos de texto improvisados, panel de estados centrado,
+tarjeta de unidad del conductor y mayor énfasis en la estimación del pasajero. Los
+iconos son decorativos para accesibilidad; las etiquetas, estados y acciones
+siguen siendo texto. No se agregan dependencias. Jest usa el build CommonJS oficial
+de Lucide para verificar los componentes reales, sin simular su renderizado. El mapa de demostración conserva
+su composición actual; reorganizarlo como el lienzo principal de Figma requiere
+una revisión visual propia, sin integrar todavía mapas o telemetría de Fase 3.
+
+Se consultaron en solo lectura las ramas remotas de los cinco repositorios. Móvil:
+`develop` con PR #1 integrado; docs: ramas T049/T050/T051/T092/T093/T095 y main;
+backend: develop, T035/T036 y pruebas T071; frontend: develop y ramas T049/T055/T056/T059;
+infraestructura: develop/main. La presencia de una rama no demuestra integración ni
+aprobación. No se cambian sus checkouts, archivos o ramas.
+
+Las dependencias reales de API, contrato de paraderos y discrepancia de tracking de
+Fase 1 quedan para su integración en Fases 3–4; no bloquean este prototipo. No se
+revalida ni levanta la pila de backend/BD para esta fase de interfaz.
 
 | ID | Bloqueo | Impacto | Mitigación |
 |---|---|---|---|
