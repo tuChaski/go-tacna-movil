@@ -1,10 +1,10 @@
 # Spec: Fase 2 — Diseño UI/UX, Flujos de Interacción y Estados de Pantalla
 
-**Rama prevista:** `feature/mobile-phase-2-ui-ux`
+**Rama activa:** `feature/mobile-phase-2-ui-ux`
 **Repositorio:** `mobile-app`
 **Fase:** 2 — Diseño UI/UX, Flujos de Interacción y Estados de Pantalla
 **Estado:** Autorizado para el alcance implementable
-**Plan técnico:** `specs/fase_2_ui_ux/plan.md`
+**Plan técnico:** `spec/fase-2/plan.md`
 
 ---
 
@@ -23,6 +23,11 @@ La aplicación consumirá los datos y eventos del backend como fuente de verdad[
 - Validar la claridad y navegación de los flujos mediante pruebas de usabilidad iniciales[cite: 1].
 
 ### 1.2. Fuera de alcance
+
+**Implementación de interfaz (25/11/2026):** las vistas nuevas son una demostración
+explícita. Mapa, micros, punto de espera, señal, GPS, red y estimaciones son fixtures
+de presentación. No hay consultas HTTP, conexiones Socket.IO, solicitudes nativas
+de permisos, autenticación ni cálculo de ETA en estos flujos.
 
 Esta fase no incluye:
 
@@ -76,6 +81,13 @@ Los componentes visuales deberán contemplar contraste adecuado y tamaños legib
 **FR-002 — Reutilización de componentes base**
 Los controles compartidos (tarjetas deslizables/*Bottom Sheets*, indicadores de estado/*badges*, banners de aviso, botones y modales) deberán diseñarse e implementarse como componentes reutilizables en `src/components/` o en los módulos correspondientes sin duplicar estilos ni lógica[cite: 1].
 
+Se implementan `AppText`, `ActionButton`, `StatusBadge`, `ScreenStateView`,
+`BottomSheetCard`, `ConfirmationDialog` y `ScreenLayout`. `Button` delega en
+`ActionButton`. Inter se carga en ejecución, con fuente del sistema si falla.
+Los tokens conservan identidad azul y usan texto oscuro sobre fondos semánticos.
+El bottom sheet ofrece expansión, cierre por gesto y botones accesibles equivalentes;
+su contenido se desplaza para evitar recortes con letra grande.
+
 ### 4.2. Flujo de interfaz del pasajero — F2-C02
 
 **FR-003 — Acceso rápido (regla de tres toques)**
@@ -95,6 +107,10 @@ El interruptor principal de transmisión deberá distinguir claramente los estad
 **FR-007 — Indicadores de estado operativos**
 La vista del conductor deberá mostrar indicadores visuales distinguibles para el estado de geolocalización (activo, buscando señal, inactivo/sin permiso), estado de conectividad (conectado, reconectando, sin red) y estado/tiempo del recorrido[cite: 1].
 
+Los indicadores se mantienen fuera del área desplazable. Finalizar, volver desde
+un recorrido de prueba activo o usar el retorno Android exige confirmación. Cancelar
+conserva estado y temporizador. Los indicadores se identifican siempre como simulados.
+
 ### 4.4. Matriz de estados de pantalla — F2-C04
 
 **FR-008 — Estados obligatorios por flujo**
@@ -106,7 +122,7 @@ Cada pantalla o flujo principal deberá contemplar explícitamente sus estados v
 - **Error controlado:** mensaje en español sin detalles técnicos internos sensibles y con opción de reintento cuando aplique[cite: 1].
 
 **FR-009 — Idioma de interfaz**
-Todos los textos, etiquetas, estados, confirmaciones y mensajes visibles al usuario en la interfaz deberán redactarse en **español** claro y natural, manteniendo código, archivos, componentes y props en **inglés**[cite: 1].
+Todos los textos, etiquetas, estados, confirmaciones y mensajes visibles al usuario en la interfaz deberán redactarse en **español** claro y natural, manteniendo los identificadores del código, archivos, componentes y props en **inglés**[cite: 1]. Por indicación del usuario, los comentarios y la documentación técnica dentro del código se redactan en **español**.
 
 ### 4.5. Validación de usabilidad — F2-C05
 
@@ -129,6 +145,11 @@ En esta fase se organiza la navegación base en `src/navigation/` para conectar 
 
 ## 6. Integración y contratos
 
+La rama se creó desde `origin/develop` en `37f2c70`, que contiene el PR #1 de
+Fase 1. Las rutas nuevas usan Expo Router: `/passenger`, `/driver`, `/ui-preview`;
+sus declaraciones se centralizan en `src/navigation/` y los archivos de `src/app/`
+son adaptadores de pantalla. No se incorpora otro contenedor de navegación.
+
 ### 6.1. Relación con contratos de Fase 1 y módulos de Fases 3–4
 
 La Fase 2 consume los tipos y estructuras base definidos en `src/types/` durante la Fase 1 y prepara la interfaz para recibir datos reales en las Fases 3 y 4 sin acoplar la UI a respuestas simuladas permanentes.
@@ -137,6 +158,32 @@ La Fase 2 consume los tipos y estructuras base definidos en `src/types/` durante
 
 - No se exige conexión en vivo a datos de producción o telemetría real para validar el diseño y los estados de interfaz.
 - Cualquier cambio en los campos visibles de unidad o recorrido que dependa de contratos del backend debe alinearse con la documentación contractual vigente[cite: 1].
+
+Los fixtures reutilizan `Route` y `MicroPosition` de Fase 1. `PassengerPlace` es
+un modelo de vista local; el punto de espera ilustrativo no define un DTO ni un
+endpoint de paraderos. Los ETA son rótulos de ejemplo, no resultados calculados.
+Con señal desactualizada se muestra «No disponible» en lugar de una llegada aparente.
+
+### 6.3. Referencias y validación pendiente
+
+Se consultaron en solo lectura la guía T049, el prototipo T051 y los informes
+T054/T095 de `go-tacna-docs`, además del `contexto.md` adjunto. El bloqueo inicial
+del navegador se resolvió mediante la integración de Figma. Se identificaron las
+ocho páginas (guía, kit, autenticación, pasajero, conductor, administración, estados
+y flujos); se revisaron capturas de mapa `70:16325`, conductor `70:16808` y sin
+conexión `73:251`. No se modificó el archivo de Figma ni se afirma una reproducción
+píxel a píxel o una revisión visual de todos sus frames.
+La evaluación previa del prototipo informa bloqueos al iniciar/finalizar recorridos
+e información de señal desactualizada. Esta implementación automatiza esas
+transiciones y oculta ETA de unidades sin señal. No se considera una nueva sesión
+de usabilidad ni una aprobación del equipo.
+
+La pasada estética posterior reutiliza los tokens y Lucide existentes: cabecera
+azul, iconografía outline decorativa con etiquetas accesibles, estados con icono
+en fondo tintado, tarjeta de unidad del conductor, acción principal con icono y
+estimación resaltada en la ficha del pasajero. No cambia los contratos o casos de
+uso. La composición completa del mapa y la validación visual en dispositivo
+siguen siendo revisiones pendientes, independientes de las pruebas automatizadas.
 
 ---
 
@@ -148,7 +195,7 @@ La Fase 2 consume los tipos y estructuras base definidos en `src/types/` durante
 
 **NFR-003 — Baja fricción y claridad:** Los flujos deben evitar pasos innecesarios o modales excesivos que entorpezcan el uso rápido en movilidad.
 
-**NFR-004 — Convenciones de `constitution.md`:** Respeto estricto al idioma del código en inglés, textos de UI en español, tipado estricto en TypeScript y flujo GitFlow (`feature/*` → Pull Request)[cite: 1].
+**NFR-004 — Convenciones de `constitution.md`:** Identificadores del código en inglés, textos de UI en español, tipado estricto en TypeScript y flujo GitFlow (`feature/*` → Pull Request)[cite: 1]. Los comentarios técnicos se mantienen en español por preferencia explícita del usuario.
 
 ---
 
