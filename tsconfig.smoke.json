@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "target": "ES2022",
+    "noEmit": false,
+    "outDir": ".smoke-build",
+    "rootDir": "src",
+    "types": ["node"],
+    "paths": {}
+  },
+  "include": [
+    "src/config/**/*.ts",
+    "src/types/**/*.ts",
+    "src/services/**/*.ts",
+    "src/features/passenger/services/**/*.ts",
+    "src/utils/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

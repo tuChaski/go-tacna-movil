@@ -1,22 +1,25 @@
-// src/components/Button.tsx
-import { Pressable, Text, StyleSheet } from 'react-native';
-import { colors, radius } from '@/theme';
+import { ActionButton } from "./ActionButton";
 
-export function Button({ title, onPress, variant = 'primary' }:
-    { title: string; onPress?: () => void; variant?: 'primary' | 'outline' }) {
-    const outline = variant === 'outline';
-    return (
-        <Pressable
-            onPress={onPress}
-            style={[s.btn, outline ? s.outline : { backgroundColor: colors.primary }]}>
-            <Text style={{ color: outline ? colors.primary : '#fff', fontWeight: '600' }}>
-                {title}
-            </Text>
-        </Pressable>
-    );
+/**
+ * Conserva la interfaz Button de las vistas de autenticación y reutiliza los
+ * estilos y la accesibilidad de ActionButton de Fase 2. Si no recibe una función
+ * de pulsación, queda deshabilitado; este adaptador no envía ni valida formularios.
+ */
+export function Button({
+  title,
+  onPress,
+  variant = "primary",
+}: {
+  title: string;
+  onPress?: () => void;
+  variant?: "primary" | "outline";
+}) {
+  return (
+    <ActionButton
+      title={title}
+      onPress={onPress ?? (() => {})}
+      variant={variant}
+      disabled={!onPress}
+    />
+  );
 }
-
-const s = StyleSheet.create({
-    btn: { height: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-    outline: { borderWidth: 1, borderColor: colors.primary, backgroundColor: '#fff' },
-});
