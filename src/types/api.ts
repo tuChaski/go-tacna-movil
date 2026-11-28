@@ -9,6 +9,8 @@ export type ErrorCode =
   | "CONTRACT"
   | "STORAGE"
   | "DISCONNECTED"
+  | "CANCELLED"
+  | "REMOTE"
   | "UNKNOWN";
 
 /** Internal client result, not a backend response envelope. */

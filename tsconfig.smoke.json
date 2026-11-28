@@ -14,6 +14,7 @@
     "src/config/**/*.ts",
     "src/types/**/*.ts",
     "src/services/**/*.ts",
+    "src/store/**/*.ts",
     "src/features/passenger/services/**/*.ts",
     "src/utils/**/*.ts"
   ],

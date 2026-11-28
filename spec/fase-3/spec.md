@@ -1,12 +1,12 @@
 # Spec: Fase 3 — Módulo Pasajero: Mapa, Rutas, Tiempo Real y ETA
 
-**Rama de esta revisión documental:** `feature/mobile-phase-2-ui-ux`
-**Rama de implementación prevista:** `feature/mobile-phase-3-passenger-live`
+**Rama de revisión documental previa:** `feature/mobile-phase-2-ui-ux`
+**Rama de implementación activa:** `feature/mobile-phase-3-passenger-live`
 **Repositorio:** `rutas-en-tiempo-real-movil`
 **Fase:** 3 — Módulo Pasajero (Mapa, Rutas, Tiempo Real y ETA)
-**Estado:** Alcance implementable autorizado; implementación pendiente y dependencias abiertas
+**Estado:** Seguimiento por línea conectado en el móvil. Pendiente de validación desde un teléfono contra el servicio activo.
 **Plan técnico:** `spec/fase-3/plan.md`
-**Revisión documental:** 25/11/2026; no acredita implementación ni cierre de Fase 2.
+**Base de implementación:** `origin/develop` en `b2708aa`, PR #2 de Fase 2 integrado. Sus pendientes de dispositivo/usabilidad conservan su estado.
 
 ---
 
@@ -146,14 +146,26 @@ Ante cualquier discrepancia o campo no confirmado en el contrato, se documentar�
 | `eta:response`                    | Respuesta de ETA documentada | Éxito `{microId, etaSeconds, estimated: true}` o error `{error}`; no requiere otra conexión.           |
 | Paraderos y sentidos separados    | Contrato pendiente           | No hay endpoint/schema ni campos diferenciados confirmados; no se inventan.                            |
 
-`speed` se expresa en m/s; `lastSeen` es un entero de milisegundos desde época Unix. Los estados son `moviendo`, `detenido` y `desconectado`. No se sustituirán los nombres oficiales por `unitId`, `routeId` o `timestamp` en el intercambio ni se añadirá `heading`. En la integración futura se ampliará el cliente central para ETA con tipos, validación, timeout y descarte de respuestas obsoletas; el cliente de Fase 1 aún no expone esa operación.
+`speed` se expresa en m/s; `lastSeen` es un entero de milisegundos desde época Unix. Los estados son `moviendo`, `detenido` y `desconectado`. No se sustituirán los nombres oficiales por `unitId`, `routeId` o `timestamp` en el intercambio ni se añadirá `heading`. El cliente central ya expone `requestEta` con tipos, validación, timeout, cancelación y descarte de confirmaciones tardías, verificado con transporte aislado. La operación observada en backend usa `callback(null, eta)` para éxito y `callback({error})` para fallo; no se ha probado aún contra un Socket.IO accesible.
 
 ### 6.3. Dependencias y brechas contractuales
 
 - Paraderos y sentidos ida/vuelta separados son dependencias abiertas. Se puede implementar mapa, catálogo publicado y telemetría sin ellos; no se marcarán como terminados esos requisitos condicionales hasta verificar sus contratos e integración.
 - Si un contrato y el servicio disponible discrepan, se detendrá únicamente la operación afectada y se registrará la aclaración necesaria. No se modificarán repositorios hermanos ni se conectará la app directamente a BD.
 - SDK/proveedor de mapas, credenciales públicas necesarias y conectividad desde Expo Go quedan por comprobar antes de integrar. Las restricciones o necesidades de builds nativos no se resolverán cambiando el flujo de prueba autorizado.
-- La integración real de backend/Socket.IO y ETA sigue pendiente; mocks contractuales permiten avanzar, pero no sustituyen la prueba del servicio ni permiten cerrar la integración en vivo.
+- Catálogo local verificado: `GET http://127.0.0.1:8001/api/v1/rutas` responde 200 y el nuevo servicio obtiene tres rutas con geometría. Socket.IO público responde 404 y `127.0.0.1:3001` rechaza conexión; no hay prueba de ETA en vivo ni desde teléfono.
+
+### 6.4. Resultado del contraste y condición de detención
+
+Se consultaron ramas actuales de los cinco repositorios en GitHub y sus fuentes sin modificar sus checkouts. Backend publica el catálogo en `main` (`6d7c4a9`) y el servidor de tiempo real en `develop` (`9bd86f3`); docs se contrastó en su `develop` actualizado (`3358eb0`). La existencia de código en ramas distintas no acredita su despliegue conjunto.
+
+- **Falta contrato/soporte de paraderos:** no hay endpoint público ni esquema de paradero en el catálogo auditado. Se mantiene `Stop = never` y T3.2.3 pendiente.
+- **Faltan datos de sentidos:** `trazado_ruta` es un único `LineString`, sin campos oficiales separados de ida/vuelta. Su representación diferenciada queda detenida.
+- **Lista inicial corregida en backend:** en `fix/passenger-realtime-contract-access` (`9fe9bd0`), `route:joined` y `micro:position` aplican `toMicroDto`. Las muestras de velocidad son privadas del servidor.
+- **Servicio accesible pendiente:** rooms y ETA existen en código (`route:join/leave`, `eta:request`), pero no están disponibles en los puertos locales comprobados. Falta desplegar/enrutar el servidor existente; no se debe duplicar la implementación de T035/T036.
+- **Rumbo visual:** cada marcador deriva su orientación de dos posiciones ordenadas separadas por al menos 5 m.
+
+La entrada `/passenger` utiliza el catálogo, el trazado disponible y la sala de la línea seleccionada. Permite consultar un micro, centrarlo y estimar su llegada a la ubicación del pasajero. Paraderos e ida/vuelta quedan diferidos con independencia del seguimiento.
 
 ---
 
@@ -198,7 +210,7 @@ Ante cualquier discrepancia o campo no confirmado en el contrato, se documentar�
 
 ## 10. Pendientes de definición antes de avanzar a Fase 4
 
-1. Resolver o mantener expresamente abiertos los contratos de paraderos y sentidos; su ausencia impide declarar completadas esas integraciones y el cierre total de Fase 3.
+1. Registrar paraderos y sentidos como ampliaciones futuras cuando existan contratos.
 2. Verificar SDK/Expo Go y acceso real a catálogo, Socket.IO y ETA; registrar cada dependencia de entorno sin darla por resuelta por mocks.
 3. Revisar el umbral visual inicial de 60 segundos y la coherencia del ETA aproximado sin alterar el timeout contractual del servidor.
 4. Comprobar limpieza de suscripciones y ubicación de primer plano al salir o pasar al Modo Conductor de Fase 4, y conservar pendientes propios de validación de Fase 2 en sus documentos.

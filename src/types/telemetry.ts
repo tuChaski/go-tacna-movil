@@ -45,6 +45,54 @@ export interface SocketError {
   message: string;
 }
 
+/** Solicitud de ETA contractual: la coordenada es la referencia del pasajero. */
+export interface EtaRequest extends Coordinates {
+  microId: number;
+}
+
+/** Estimación del servidor en segundos; no garantiza recorrido vial ni tráfico. */
+export interface EtaResponse {
+  microId: number;
+  etaSeconds: number;
+  estimated: true;
+}
+
+/** Error específico de eta:request; no es el evento genérico Socket.IO error. */
+export interface EtaError {
+  error: string;
+}
+
+/** Valida sin transformar ni añadir campos al payload de salida. */
+export function isEtaRequest(value: unknown): value is EtaRequest {
+  return (
+    isRecord(value) &&
+    hasOnlyKeys(value, ["microId", "lat", "lng"]) &&
+    isPositiveInteger(value.microId) &&
+    isCoordinates(value)
+  );
+}
+
+/** Rechaza respuestas de otro esquema, tiempos negativos y estimaciones no tipadas. */
+export function isEtaResponse(value: unknown): value is EtaResponse {
+  return (
+    isRecord(value) &&
+    hasOnlyKeys(value, ["microId", "etaSeconds", "estimated"]) &&
+    isPositiveInteger(value.microId) &&
+    Number.isSafeInteger(value.etaSeconds) &&
+    isNonNegativeNumber(value.etaSeconds) &&
+    value.estimated === true
+  );
+}
+
+/** El texto remoto se valida, pero se sustituye por un mensaje seguro en la UI. */
+export function isEtaError(value: unknown): value is EtaError {
+  return (
+    isRecord(value) &&
+    hasOnlyKeys(value, ["error"]) &&
+    typeof value.error === "string"
+  );
+}
+
 export interface ClientEventPayloads {
   "route:join": number;
   "route:leave": number;

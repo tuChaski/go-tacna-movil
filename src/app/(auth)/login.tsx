@@ -29,7 +29,7 @@ export default function Login() {
             setFailed(false);
             return;
         }
-        // TODO: aquí irá la llamada al backend. Por ahora simulamos credenciales incorrectas.
+        // La demostración de Fase 2 presenta el estado de error con datos de ejemplo.
         setFailed(true);
     };
 
@@ -53,12 +53,12 @@ export default function Login() {
                     </View>
 
                     <Text style={s.title}>
-                        {failed ? 'No pudimos iniciar sesión' : 'Iniciar sesión'}
+                        {failed ? 'Ejemplo de acceso rechazado' : 'Demo de inicio de sesión'}
                     </Text>
                     <Text style={s.subtitle}>
                         {failed
-                            ? 'El correo o la contraseña no son correctos. Revisa tus datos e inténtalo de nuevo.'
-                            : 'Accede a tu cuenta de Go Tacna.'}
+                            ? 'Así se verá un error de acceso. Puedes abrir el mapa como invitado.'
+                            : 'Prueba el formulario con datos ficticios.'}
                     </Text>
                 </View>
 
@@ -66,8 +66,8 @@ export default function Login() {
                 {failed && (
                     <AlertBox
                         variant="error"
-                        title="Credenciales incorrectas"
-                        message="Por seguridad, no podemos confirmar si el correo existe. Verifica que los datos sean los que usaste al registrarte."
+                        title="Credenciales incorrectas (ejemplo)"
+                        message="Esta demostración aún no verifica cuentas."
                     />
                 )}
 
@@ -114,7 +114,11 @@ export default function Login() {
                     </View>
 
                     <Button
-                        title="Crear una cuenta de pasajero"
+                        title="Explorar rutas como invitado"
+                        onPress={() => router.replace('/passenger')}
+                    />
+                    <Button
+                        title="Ver demo de registro"
                         variant="outline"
                         onPress={() => router.push('/register')}
                     />

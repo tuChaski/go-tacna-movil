@@ -1,12 +1,12 @@
 # Plan de Implementación: Fase 3 — Módulo Pasajero: Mapa, Rutas, Tiempo Real y ETA
 
 **Repositorio:** `rutas-en-tiempo-real-movil`
-**Rama de esta revisión documental:** `feature/mobile-phase-2-ui-ux`
-**Rama de implementación prevista:** `feature/mobile-phase-3-passenger-live`
+**Rama de revisión documental previa:** `feature/mobile-phase-2-ui-ux`
+**Rama de implementación activa:** `feature/mobile-phase-3-passenger-live`
 **Fase:** 3 — Módulo Pasajero (Mapa, Rutas, Tiempo Real y ETA)
-**Estado:** Autorizado para ejecución progresiva
+**Estado:** Pantalla de seguimiento integrada. Prueba de dispositivo y despliegue del servicio pendientes.
 **Especificación funcional:** `spec/fase-3/spec.md`
-**Revisión:** 25/11/2026; solo documentación, sin iniciar la implementación.
+**Base verificada:** `b2708aa` de `origin/develop`, que integra el PR #2 de Fase 2.
 
 ## 0. Documentos de referencia y estado previo
 
@@ -168,14 +168,14 @@ Notas:
 
 - **Catálogo REST:** `GET /rutas`, relativo a `EXPO_PUBLIC_API_BASE_URL`, paginado y con `trazado_ruta` opcional/nulo. Paraderos y sentidos separados carecen de contrato publicado; `Stop = never` se conserva hasta su definición oficial.
 - **Telemetría Socket.IO:** `route:join`/`route:leave` reciben un entero positivo. `route:joined` devuelve `{rutaId, micros}`; cada posición contiene `microId`, `rutaId`, `lat`, `lng`, `speed`, `status`, `lastSeen`, sin `heading`. `micro:offline` contiene `microId/lastSeen`; `micro:stopped`, `microId`.
-- **ETA:** operación documentada `eta:request` y respuesta `eta:response`, preferentemente por confirmación del envío. El cliente de Fase 1 solo expone joins/leaves: añadir la operación tipada y validada es trabajo pendiente de Fase 3. Verificar que el servicio disponible cumple el contrato antes de cerrar la integración.
+- **ETA:** el singleton ahora expone `requestEta` mediante la confirmación error-first observada en backend: `callback(null, eta)` o `callback({error})`. Se validan DTO, identidad de unidad, cancelación, desconexión y timeout sin otra instancia. La ficha consulta el ETA. Falta validación contra un servicio accesible.
 - Conservar los DTO oficiales y sus validadores estrictos; cualquier nombre o estado visual derivado queda en el dominio/presentación. Una discrepancia con el backend se registra y bloquea solo esa operación.
 
 ## 7. Rutas y navegación
 
 Integrar `PassengerHomeScreen` dentro de la navegación centralizada de la aplicación (`src/navigation/`) y mantener la accesibilidad rápida de la regla de los tres toques establecida en la Fase 2[cite: 1].
 
-Se reutiliza Expo Router y `/passenger`; no se introduce otro contenedor de navegación. Esta preparación documental permanece en la rama de Fase 2. La rama de Fase 3 se creará más adelante desde `develop` actualizado, tras integrar y revisar el avance previo conforme al flujo acordado.
+Expo Router abre `/passenger` con el catálogo y el seguimiento reales. La demostración se conserva en la galería de Fase 2.
 
 ## 8. Alcance de conectividad
 
@@ -225,24 +225,20 @@ La consulta en vivo requiere acceso HTTP/Socket.IO desde el teléfono; verificar
 
 ### 12.1. Bloqueos
 
-| ID  | Bloqueo                                                                                                                    | Impacto                                                                   | Mitigación                                                                                                             |
-| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| B1  | Paraderos y sentidos separados sin contrato; `heading` no forma parte del payload.                                         | No se puede cerrar la representación contractual de paraderos/ida-vuelta. | Usar trazado publicado y orientación visual derivada; mantener dependencias abiertas sin inventar DTO.                 |
-| B2  | Disponibilidad de API/Socket.IO, host accesible desde teléfono y proveedor/clave de mapas por revalidar.                   | Integración real todavía no comprobada.                                   | Preflight de entorno en Fase 3, mocks contractuales y registro separado de resultados reales; sin acceso directo a BD. |
-| B3  | ETA existe en docs pero su operación no está expuesta por el cliente móvil ni se ha probado contra el servicio disponible. | No puede afirmarse ETA real por disponer solo de documentación.           | Extensión tipada del singleton, pruebas de confirmación/error/timeout e integración posterior.                         |
-| B4  | Fase 2 conserva validación visual y usabilidad pendiente.                                                                  | Esta revisión no acredita su cierre ni permite omitirla.                  | Mantener trazabilidad en `spec/fase-2/task.md` y revisar antes de comenzar la implementación en vivo.                  |
+| ID  | Bloqueo                                                                                                                                            | Impacto                                                                   | Mitigación                                                                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| B1  | Paraderos y sentidos separados sin contrato; `heading` no forma parte del payload.                                                                 | No se puede cerrar la representación contractual de paraderos/ida-vuelta. | Usar trazado publicado y orientación visual derivada; mantener dependencias abiertas sin inventar DTO.           |
+| B2  | Catálogo local responde 200; Socket.IO público responde 404 y puerto 3001 no escucha. Falta acceso desde teléfono y proveedor de mapas verificado. | Circuito en vivo y prueba de dispositivo pendientes.                      | Desplegar/enrutar el servidor existente y verificar LAN/Expo Go; no conectar directamente a BD.                  |
+| B3 | Proyección corregida en backend `9fe9bd0`. | Queda comprobar la versión desplegada. | Validar `route:joined` y ETA con un micro que esté reportando. |
+| B4  | Fase 2 conserva validación visual y usabilidad pendiente.                                                                                          | Esta revisión no acredita su cierre ni permite omitirla.                  | Mantener trazabilidad en `spec/fase-2/task.md` y revisar antes de comenzar la implementación en vivo.            |
 
-### 12.2. Decisiones pendientes
+### 12.2. Decisión para el móvil
 
-| ID    | Decisión                                                                                                                | Impacto                                                                                 |
-| ----- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| DP-01 | SDK/proveedor y dependencias de ubicación compatibles con SDK instalado y Expo Go; restricciones de claves/plataformas. | ADR y prueba de visor antes de avanzar; no se preselecciona biblioteca sin comprobarla. |
-| DP-02 | Umbral de desplazamiento para rumbo visual y frecuencia de consulta ETA.                                                | Parámetros de presentación/carga que deben fijarse y probarse al integrar.              |
-| DP-03 | Resolución oficial de paraderos y sentidos separados.                                                                   | Requiere contrato externo; no se resuelve desde el móvil.                               |
+Se eligieron `react-native-maps` y `expo-location` para usar el proveedor de mapas predeterminado y el permiso de primer plano en Expo Go SDK 57. El navegador conserva la lista accesible. Esta decisión local no cambia DEC-002 en el repositorio de documentación.
 
-Políticas iniciales documentadas en esta revisión: ETA contractual remoto como fuente principal sin estimador local automático, aviso visual tras 60s y TTL de catálogo de 24h. Son decisiones del cliente, no cambios al contrato; se validarán al implementar. Cualquier futuro ETA local con promedio móvil requiere una decisión expresa y rótulo de aproximación.
+Zustand conserva la flota en memoria por sesión. Los marcadores interpolan posiciones durante 600 ms y derivan el rumbo a partir de 5 m. La ficha consulta el ETA remoto cada 15 s mientras la señal tenga como máximo 60 s. Al cambiar de línea, perder el foco o pasar a segundo plano se libera la sala. Al volver se exige una nueva lista inicial.
 
-Ninguna de estas decisiones se resolverá por suposición sin quedar documentada.
+En la rama de backend `fix/passenger-realtime-contract-access` (`9fe9bd0`), ambos eventos de posición publican el DTO oficial. El despliegue directo usa API en `:8001/api/v1` y Socket.IO en `:3001`; el proxy opcional concentra ambos en `:8080`. Quedan pendientes la prueba en teléfono, el contraste visual con Figma y la comprobación de ubicación, animación y ETA reales. Paraderos e ida/vuelta son ampliaciones independientes.
 
 ## 13. Criterios de finalización
 
@@ -250,7 +246,7 @@ La Fase 3 se considerará completada cuando:
 
 1. La documentación esté integrada desde la rama actual y la implementación se realice en `feature/mobile-phase-3-passenger-live` creada desde `develop` actualizado.
 2. El mapa se muestre en el flujo Expo (`npx expo start`), solicite ubicación en primer plano y centre la cámara en el usuario[cite: 1].
-3. El trazado y catálogo funcionen con caché validada; paraderos y sentidos tengan contrato y prueba para declarar su integración completa. Si siguen pendientes, se reporta entrega parcial, no cierre total de Fase 3.
+3. El trazado y el catálogo funcionen con caché validada. Paraderos y sentidos quedan diferidos a sus contratos oficiales.
 4. Suscripción, reconexión, ciclo de vida, descarte de posiciones antiguas y animación funcionen sin otra instancia de socket ni un campo `heading` inventado.
 5. Distancia directa, ETA remoto aproximado y señal antigua se presenten correctamente con todos sus casos de indisponibilidad.
 6. TypeScript, linter y pruebas unitarias/de integración finalicen sin errores[cite: 1].
