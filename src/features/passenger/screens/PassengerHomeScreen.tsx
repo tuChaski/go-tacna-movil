@@ -21,10 +21,12 @@ import { UnitInfoSheet } from "../components/UnitInfoSheet";
  * Mostrar esta pantalla no consulta rutas, solicita GPS ni inicia un socket.
  */
 export function PassengerHomeScreen({
+  embedded,
   status = "ready",
   onRecover,
   onBack,
 }: {
+  embedded?: boolean;
   status?: ScreenStatus;
   onRecover?: () => void;
   onBack?: () => void;
@@ -35,12 +37,7 @@ export function PassengerHomeScreen({
   const places =
     flow.routeId === undefined ? [] : getPreviewPlaces(flow.routeId);
   return (
-    <ScreenLayout
-      title="Encuentra tu micro"
-      subtitle="Elige una ruta y explora."
-      onBack={onBack}
-      compact
-    >
+    <ScreenLayout embedded={embedded} onBack={onBack} compact>
       <StatusBadge label="Demostración · sin datos en vivo" />
       {status !== "ready" ? (
         <ScreenStateView
@@ -55,9 +52,6 @@ export function PassengerHomeScreen({
       ) : (
         <>
           <View style={styles.section}>
-            <AppText variant="heading" accessibilityRole="header">
-              1. Elige tu ruta
-            </AppText>
             <RouteSelector
               routes={previewRoutes}
               selectedId={flow.routeId}
@@ -66,10 +60,8 @@ export function PassengerHomeScreen({
             />
           </View>
           <View style={styles.section}>
-            <AppText variant="label" accessibilityRole="header">
-              2. Elige un micro o punto de espera
-            </AppText>
             <PassengerMapPreview
+              routeId={flow.routeId}
               places={places}
               onSelect={flow.selectPlace}
               focusedKey={flow.focusedPlace?.key}
@@ -92,9 +84,6 @@ export function PassengerHomeScreen({
               </AppText>
             </View>
           )}
-          <AppText variant="small" style={{ color: colors.muted }}>
-            Ruta → micro o punto de espera → ubicación. Sin crear una cuenta.
-          </AppText>
           <UnitInfoSheet
             place={flow.selection}
             onClose={flow.closeSheet}

@@ -1,121 +1,59 @@
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { ScrollView, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Button } from "@/components/Button";
+import { AppHeader } from "@/components/AppHeader";
+import { AppText } from "@/components/AppText";
+import { ActionButton } from "@/components/ActionButton";
 import { MapPreview } from "@/components/MapPreview";
 import { colors } from "@/theme";
-import { appRoutes } from "@/navigation/routes";
 
-/**
- * Conecta la bienvenida existente con autenticación y demostraciones de Fase 2.
- * Explorar como invitado no requiere cuenta. El acceso del conductor abre una
- * simulación, no una sesión autenticada. El enlace a la galería interna solo se
- * muestra en desarrollo; ocultarlo no aplica un control de acceso a la ruta.
- */
+/** La bienvenida ofrece exploración pública y acceso a los formularios de pasajero. */
 export default function Welcome() {
+  const { height } = useWindowDimensions();
   return (
-    <SafeAreaView style={s.safe}>
-      <ScrollView contentContainerStyle={s.content}>
-        {/* Encabezado */}
-        <View style={s.header}>
-          <View style={s.brand}>
-            <View style={s.logo}>
-              <Ionicons name="bus" size={16} color="#fff" />
-            </View>
-            <Text style={s.brandText}>Go Tacna</Text>
-          </View>
-          <Ionicons
-            name="person-circle-outline"
-            size={26}
-            color={colors.primary}
-          />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <AppHeader location="Tacna, Perú" />
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          width: "100%",
+          maxWidth: 600,
+          alignSelf: "center",
+          padding: 20,
+          gap: 16,
+          justifyContent: "center",
+        }}
+      >
+        <View style={{ height: Math.min(310, Math.max(166, height * 0.3)) }}>
+          <MapPreview />
         </View>
-
-        {/* Ilustración de bienvenida; la exploración interactiva tiene su propia ruta. */}
-        <MapPreview />
-
-        {/* Presentación del producto. Las demostraciones identifican los datos simulados. */}
-        <Text style={s.title}>Tu transporte, más cerca.</Text>
-        <Text style={s.subtitle}>
-          Go Tacna te muestra en tiempo real dónde está tu micro y cuánto tarda
-          en llegar.
-        </Text>
-
-        {/* Acciones de navegación; formularios y sesiones se gestionan en otros módulos. */}
-        <View style={s.actions}>
-          <Button
-            title="Explorar rutas como invitado"
-            onPress={() => router.push(appRoutes.passenger)}
+        <AppText
+          variant="display"
+          accessibilityRole="header"
+          style={{ color: colors.navy }}
+        >
+          Tu ciudad, más cerca.
+        </AppText>
+        <AppText style={{ color: colors.muted }}>
+          Encuentra tu ruta y consulta los micros disponibles en Tacna.
+        </AppText>
+        <View style={{ gap: 4, marginTop: 8 }}>
+          <ActionButton
+            title="Explorar rutas"
+            onPress={() => router.push("/passenger")}
           />
-          <Button
-            title="Ver demo de inicio de sesión"
+          <ActionButton
+            title="Iniciar sesión"
+            variant="secondary"
             onPress={() => router.push("/login")}
           />
-          <Button
-            title="Ver demo de registro"
-            variant="outline"
+          <ActionButton
+            title="¿No tienes cuenta? Regístrate"
+            variant="text"
             onPress={() => router.push("/register")}
           />
-          <Button
-            title="Probar la vista del conductor"
-            variant="outline"
-            onPress={() => router.push(appRoutes.driver)}
-          />
-          {__DEV__ && (
-            <Button
-              title="Revisar estados de interfaz"
-              variant="outline"
-              onPress={() => router.push(appRoutes.preview)}
-            />
-          )}
         </View>
-
-        <Text style={s.footer}>
-          Puedes consultar el mapa como invitado. Las cuentas de pasajero aún
-          están en desarrollo.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 20, paddingBottom: 32 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  brand: { flexDirection: "row", alignItems: "center", gap: 8 },
-  logo: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  brandText: { fontSize: 16, fontWeight: "700", color: colors.text },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.muted,
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  actions: { gap: 12 },
-  footer: {
-    textAlign: "center",
-    fontSize: 12,
-    color: colors.muted,
-    marginTop: 16,
-  },
-});

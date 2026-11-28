@@ -31,7 +31,7 @@ describe("componentes y matriz de estados", () => {
       <ActionButton title="Continuar" disabled onPress={action} />,
     );
     const button = screen.getByRole("button");
-    expect(button).toHaveStyle({ minHeight: 56, minWidth: 48 });
+    expect(button).toHaveStyle({ minHeight: 50, minWidth: 48 });
     await fireEvent.press(button);
     expect(action).not.toHaveBeenCalled();
     await rerender(<ActionButton title="Continuar" loading onPress={action} />);
@@ -115,7 +115,7 @@ describe("consola del conductor", () => {
     const intervalSpy = jest.spyOn(global, "setInterval");
     const { unmount } = await render(<DriverConsoleScreen />);
     const control = screen.getByRole("switch");
-    expect(control).toHaveStyle({ minHeight: 80, minWidth: 48 });
+    expect(control).toHaveStyle({ minHeight: 54, minWidth: 48 });
     await fireEvent.press(control);
     // Identifica el intervalo del recorrido; React Native puede programar otras tareas.
     // La limpieza debe liberar ese recurso, no todos los temporizadores del entorno.
@@ -203,4 +203,17 @@ test("contraste de texto principal y estados ≥ 4.5:1 en superficies previstas"
     );
     expect((values[0] + 0.05) / (values[1] + 0.05)).toBeGreaterThanOrEqual(4.5);
   }
+});
+test("la búsqueda admite espacios y guiones, informa si está vacía y se puede limpiar", async () => {
+  await render(<PassengerHomeScreen />);
+  const input = screen.getByLabelText("Buscar ruta");
+  await fireEvent.changeText(input, " LÍNEA-04 ");
+  expect(screen.queryByLabelText("Seleccionar Línea 10")).toBeNull();
+  expect(screen.getByLabelText("Seleccionar Línea 04")).toBeTruthy();
+  await fireEvent.changeText(input, "inexistente");
+  expect(screen.getByText(/Ninguna línea/)).toBeTruthy();
+  await fireEvent.press(
+    screen.getByRole("button", { name: "Limpiar búsqueda" }),
+  );
+  expect(screen.getByLabelText("Seleccionar Línea 10")).toBeTruthy();
 });

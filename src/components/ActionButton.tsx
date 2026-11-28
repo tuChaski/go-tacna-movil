@@ -6,7 +6,7 @@ interface Props {
   title: string;
   /** Notifica la pulsación; el padre gestiona el negocio y las tareas asíncronas. */
   onPress: () => void;
-  variant?: "primary" | "outline" | "danger";
+  variant?: "primary" | "outline" | "danger" | "secondary" | "text";
   disabled?: boolean;
   /** Muestra progreso y bloquea pulsaciones hasta que el padre retire la carga. */
   loading?: boolean;
@@ -30,6 +30,7 @@ export function ActionButton({
   // Durante la carga se bloquean los envíos repetidos mientras la tarea está pendiente.
   const inactive = disabled || loading;
   const outline = variant === "outline";
+  const light = outline || variant === "secondary" || variant === "text";
   return (
     <Pressable
       accessibilityRole="button"
@@ -42,15 +43,17 @@ export function ActionButton({
         {
           backgroundColor: inactive
             ? colors.disabled
-            : outline
-              ? colors.surface
-              : variant === "danger"
-                ? colors.errorInk
-                : colors.primary,
+            : {
+                primary: colors.primary,
+                secondary: colors.infoBg,
+                outline: colors.surface,
+                text: "transparent",
+                danger: colors.errorInk,
+              }[variant],
           borderColor: inactive
             ? colors.disabled
             : outline
-              ? colors.primary
+              ? colors.border
               : "transparent",
           opacity: pressed ? 0.8 : 1,
         },
@@ -62,10 +65,11 @@ export function ActionButton({
         style={{
           color: inactive
             ? colors.muted
-            : outline
+            : light
               ? colors.primaryInk
               : colors.surface,
           textAlign: "center",
+          flexShrink: 1,
         }}
       >
         {title}
@@ -76,7 +80,7 @@ export function ActionButton({
 const styles = StyleSheet.create({
   button: {
     ...touchTarget,
-    minHeight: 56,
+    minHeight: 50,
     borderWidth: 1,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,

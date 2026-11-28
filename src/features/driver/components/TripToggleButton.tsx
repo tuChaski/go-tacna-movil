@@ -46,16 +46,14 @@ export function TripToggleButton({
         size={24}
       />
       <AppText
-        variant="heading"
+        variant="label"
         style={{
           color: disabled ? colors.muted : colors.surface,
           textAlign: "center",
           flexShrink: 1,
         }}
       >
-        {active
-          ? "Finalizar recorrido de prueba"
-          : "Iniciar recorrido de prueba"}
+        {active ? "Finalizar recorrido" : "Iniciar recorrido"}
       </AppText>
     </Pressable>
   );
@@ -63,9 +61,9 @@ export function TripToggleButton({
 const styles = StyleSheet.create({
   control: {
     ...touchTarget,
-    minHeight: 80,
+    minHeight: 54,
     borderRadius: radius.lg,
-    padding: spacing.lg,
+    padding: spacing.compact,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",

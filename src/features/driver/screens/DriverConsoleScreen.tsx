@@ -24,10 +24,12 @@ import { AppIcon } from "../../../components/AppIcon";
  * finalizarse en otro escenario tras confirmarlo; cambiar de estado no lo termina.
  */
 export function DriverConsoleScreen({
+  embedded,
   status = "ready",
   onRecover,
   onBack,
 }: {
+  embedded?: boolean;
   status?: ScreenStatus;
   onRecover?: () => void;
   onBack?: () => void;
@@ -78,12 +80,11 @@ export function DriverConsoleScreen({
   return (
     <ScreenLayout
       title="Modo conductor"
-      subtitle="Usa los controles con el vehículo detenido."
+      embedded={embedded}
       onBack={onBack ? requestBack : undefined}
-      persistentContent={<TelemetryStatusBar status={status} active={active} />}
     >
       <StatusBadge
-        label="Simulación · no transmite tu ubicación"
+        label="Modo de prueba · No transmite tu ubicación."
         tone="warning"
       />
       <View style={styles.trip}>
@@ -92,10 +93,12 @@ export function DriverConsoleScreen({
             <AppIcon icon={BusFront} size={32} />
           </View>
           <View style={styles.assignmentCopy}>
-            <AppText variant="small" style={{ color: colors.muted }}>
-              Unidad de demostración
+            <AppText variant="small" style={{ color: colors.mint }}>
+              Unidad asignada · Prueba
             </AppText>
-            <AppText variant="heading">Micro 01 · Línea 10</AppText>
+            <AppText variant="heading" style={{ color: colors.surface }}>
+              Micro 01 · Línea 10
+            </AppText>
           </View>
         </View>
         <View style={styles.tripSummary}>
@@ -105,9 +108,10 @@ export function DriverConsoleScreen({
               : "Listo para un recorrido de prueba"}
           </AppText>
           <View style={styles.timerHeading}>
-            <AppIcon icon={Clock3} color={colors.muted} size={18} />
+            <AppIcon icon={Clock3} color={colors.mint} size={18} />
             <AppText
               variant="heading"
+              style={{ fontVariant: ["tabular-nums"], color: colors.surface }}
               accessibilityLabel={`Tiempo de recorrido: ${time}`}
             >
               {time}
@@ -115,6 +119,7 @@ export function DriverConsoleScreen({
           </View>
         </View>
       </View>
+      <TelemetryStatusBar status={status} active={active} />
       {status !== "ready" && (
         <ScreenStateView
           status={status}
@@ -132,8 +137,7 @@ export function DriverConsoleScreen({
         onToggle={toggle}
       />
       <AppText variant="small" style={{ color: colors.muted }}>
-        Opera estos controles únicamente cuando sea seguro. Esta vista no activa
-        GPS ni transmisión.
+        Utiliza los controles con el vehículo detenido.
       </AppText>
       <ConfirmationDialog
         visible={confirming}
@@ -145,7 +149,7 @@ export function DriverConsoleScreen({
 }
 const styles = StyleSheet.create({
   trip: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.navy,
     padding: spacing.md,
     borderRadius: radius.xl,
     gap: spacing.compact,
@@ -176,5 +180,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.sm,
   },
-  summaryText: { flex: 1, color: colors.muted },
+  summaryText: { flex: 1, color: colors.surface },
 });
