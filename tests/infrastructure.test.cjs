@@ -7,9 +7,6 @@ const {
   SocketClient,
 } = require("../.smoke-build/services/websocket/socketClient");
 const {
-  getRoutes,
-} = require("../.smoke-build/features/passenger/services/catalogService");
-const {
   validateUrl,
   getConfigurationErrors,
 } = require("../.smoke-build/config/env");
@@ -34,6 +31,10 @@ Module._load = function (name, ...args) {
 const {
   StorageService,
 } = require("../.smoke-build/services/storage/storageService");
+// El catálogo reutiliza ahora StorageService: cargarlo con el mismo driver aislado.
+const {
+  getRoutes,
+} = require("../.smoke-build/features/passenger/services/catalogService");
 Module._load = originalLoad;
 
 // Fixtures from docs/contratos/openapi.yaml and payload-gps.md; no backend is implied.
