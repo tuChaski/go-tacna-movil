@@ -19,29 +19,36 @@ export function ScreenLayout({
   onBack,
   persistentContent,
   compact = false,
+  embedded = false,
   children,
 }: PropsWithChildren<{
-  title: string;
-  subtitle: string;
+  embedded?: boolean;
+  title?: string;
+  subtitle?: string;
   onBack?: () => void;
   persistentContent?: ReactNode;
   compact?: boolean;
 }>) {
   return (
-    <SafeAreaView style={styles.safe}>
-      <AppHeader onBack={onBack} />
+    <SafeAreaView
+      edges={embedded ? ["left", "right"] : undefined}
+      style={styles.safe}
+    >
+      <AppHeader
+        onBack={onBack}
+        title={title}
+        location={title ? undefined : "Tacna"}
+      />
       {persistentContent && (
         <View style={styles.fixed}>{persistentContent}</View>
       )}
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.content, compact && { gap: spacing.md }]}
       >
-        <View style={styles.titles}>
-          <AppText variant="title" accessibilityRole="header">
-            {title}
-          </AppText>
+        {subtitle && (
           <AppText style={{ color: colors.muted }}>{subtitle}</AppText>
-        </View>
+        )}
         {children}
       </ScrollView>
     </SafeAreaView>

@@ -1,3 +1,8 @@
+import LocateFixed from "lucide-react-native/icons/locate-fixed";
+import Scan from "lucide-react-native/icons/scan";
+import { IconButton } from "../../../components/IconButton";
+import { View } from "react-native";
+import { colors, routeColor } from "../../../theme";
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "zustand";
 import { ScreenLayout } from "../../../components/ScreenLayout";
@@ -10,7 +15,7 @@ import {
   passengerCatalogService,
   type RouteCatalog,
 } from "../services/catalogService";
-import { RouteSelector } from "../components/RouteSelector";
+import { RouteSelector, routeLabel } from "../components/RouteSelector";
 import { PassengerMapView } from "../components/PassengerMapView";
 import {
   createPassengerFleet,
@@ -61,12 +66,7 @@ export function PassengerLiveScreen({
   }, [attempt]);
   const selected = catalog?.routes.find((route) => route.id === routeId);
   return (
-    <ScreenLayout
-      title="Encuentra tu micro"
-      subtitle="Elige una línea para ver sus micros en el mapa."
-      onBack={onBack}
-      compact
-    >
+    <ScreenLayout onBack={onBack} compact>
       {!!message && <AppText>{message}</AppText>}
       {catalog?.source === "cache" && (
         <AppText>
@@ -81,7 +81,7 @@ export function PassengerLiveScreen({
           selectedId={selected?.id}
           routes={catalog.routes.map((route) => ({
             route,
-            label: String(route.id),
+            label: routeLabel(route.nombre_ruta),
             description: "",
           }))}
           onSelect={setRouteId}
@@ -109,6 +109,8 @@ function RouteTracking({ route }: { route: Route }) {
   const [attempt, setAttempt] = useState(0);
   useEffect(() => session.start(), [session, attempt]);
   const fleet = useStore(session.store);
+  const [expanded, setExpanded] = useState(false);
+  const [fitRequest, fit] = useState(0);
   const [selectedId, select] = useState<number>();
   const [target, setTarget] = useState<MapCoordinate>();
   const location = usePassengerLocation();
@@ -135,45 +137,84 @@ function RouteTracking({ route }: { route: Route }) {
   );
   return (
     <>
-      <PassengerMapView
-        line={line}
-        units={units}
-        target={target ?? point}
-        location={point}
-        onSelect={select}
-      />
-      {!line.length && (
-        <AppText>Esta línea aún no tiene un trazado publicado.</AppText>
-      )}
-      {fleet.phase === "waiting" && (
-        <AppText>Esperando la lista de micros…</AppText>
-      )}
-      {(fleet.phase === "offline" || fleet.phase === "error") && (
-        <ScreenStateView
-          status={fleet.phase}
-          message={fleet.message}
-          onAction={() => setAttempt((value) => value + 1)}
+      <View>
+        <PassengerMapView
+          fitRequest={fitRequest}
+          routeId={route.id}
+          line={line}
+          units={units}
+          target={target ?? point}
+          location={point}
+          onSelect={select}
         />
-      )}
-      {fleet.phase === "ready" && !units.length && (
-        <AppText>Esta línea no tiene micros reportados.</AppText>
-      )}
-      {units.map((item) => (
-        <ActionButton
-          key={item.microId}
-          variant="outline"
-          title={`Micro ${item.microId} · ${item.status}`}
-          onPress={() => select(item.microId)}
-        />
-      ))}
-      <ActionButton
-        title="Usar mi ubicación para estimar la llegada"
-        loading={location.busy}
-        onPress={() => {
-          setTarget(undefined);
-          void location.locate();
+        <View style={{ position: "absolute", right: 8, bottom: 12, gap: 6 }}>
+          {line.length > 1 && (
+            <IconButton
+              label="Ver recorrido completo"
+              icon={Scan}
+              onPress={() => {
+                setTarget(undefined);
+                fit((n) => n + 1);
+              }}
+            />
+          )}
+          <IconButton
+            label="Usar mi ubicación para estimar la llegada"
+            icon={LocateFixed}
+            disabled={location.busy}
+            onPress={() => {
+              setTarget(undefined);
+              void location.locate();
+            }}
+          />
+        </View>
+      </View>
+      <View
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: 16,
+          padding: 14,
+          gap: 8,
+          borderLeftWidth: 4,
+          borderColor: routeColor(route.id),
         }}
-      />
+      >
+        <AppText variant="heading">{route.nombre_ruta}</AppText>
+        {fleet.phase === "ready" && (
+          <ActionButton
+            variant="secondary"
+            title={
+              expanded ? "Ocultar unidades" : `Ver unidades · ${units.length}`
+            }
+            onPress={() => setExpanded(!expanded)}
+          />
+        )}
+        {!line.length && (
+          <AppText>Esta línea aún no tiene un trazado publicado.</AppText>
+        )}
+        {fleet.phase === "waiting" && (
+          <AppText>Esperando la lista de micros…</AppText>
+        )}
+        {(fleet.phase === "offline" || fleet.phase === "error") && (
+          <ScreenStateView
+            status={fleet.phase}
+            message={fleet.message}
+            onAction={() => setAttempt((value) => value + 1)}
+          />
+        )}
+        {fleet.phase === "ready" && !units.length && (
+          <AppText>Esta línea no tiene micros reportados.</AppText>
+        )}
+        {expanded &&
+          units.map((item) => (
+            <ActionButton
+              key={item.microId}
+              variant="outline"
+              title={`Micro ${item.microId} · ${item.status}`}
+              onPress={() => select(item.microId)}
+            />
+          ))}
+      </View>
       {!!location.notice && <AppText>{location.notice}</AppText>}
       {unit && (
         <UnitDetail

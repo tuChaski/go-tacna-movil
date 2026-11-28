@@ -1,3 +1,4 @@
+import { useReducedMotion } from "react-native-reanimated";
 import { useMemo, useState, type PropsWithChildren } from "react";
 import {
   Modal,
@@ -32,6 +33,7 @@ export function BottomSheetCard({
   title: string;
   onClose: () => void;
 }>) {
+  const reduced = useReducedMotion();
   const [expanded, setExpanded] = useState(false);
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -55,7 +57,7 @@ export function BottomSheetCard({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={reduced ? "none" : "slide"}
       onRequestClose={onClose}
       onDismiss={() => setExpanded(false)}
     >
@@ -72,7 +74,7 @@ export function BottomSheetCard({
           style={[
             styles.sheet,
             {
-              height: height * (expanded ? 0.9 : 0.72),
+              height: height * (expanded ? 0.87 : 0.52),
               // Mantiene la última acción fuera del área inferior reservada del dispositivo.
               paddingBottom: Math.max(insets.bottom, spacing.md),
             },
@@ -96,7 +98,7 @@ export function BottomSheetCard({
             {children}
             <ActionButton
               title="Cerrar ficha"
-              variant="outline"
+              variant="text"
               onPress={onClose}
             />
           </ScrollView>

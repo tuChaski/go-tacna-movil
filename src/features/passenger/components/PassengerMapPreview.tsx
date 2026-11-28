@@ -1,7 +1,13 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import Svg, { Line, Path, Rect } from "react-native-svg";
 import { AppText } from "../../../components/AppText";
-import { colors, radius, spacing, touchTarget } from "../../../theme";
+import {
+  colors,
+  routeColor,
+  radius,
+  spacing,
+  touchTarget,
+} from "../../../theme";
 import type { PassengerPlace } from "../data/passengerPreview";
 
 /**
@@ -15,14 +21,17 @@ import type { PassengerPlace } from "../data/passengerPreview";
  * Si la lista está vacía, pide elegir una ruta antes de mostrar vehículos de ejemplo.
  */
 export function PassengerMapPreview({
+  routeId,
   places,
   onSelect,
   focusedKey,
 }: {
+  routeId?: number;
   places: PassengerPlace[];
   onSelect: (place: PassengerPlace) => void;
   focusedKey?: string;
 }) {
+  const tint = routeId === undefined ? colors.primary : routeColor(routeId);
   return (
     <View style={styles.map}>
       <Svg
@@ -59,7 +68,7 @@ export function PassengerMapPreview({
         {places.length > 0 && (
           <Path
             d="M 60 300 L 60 230 L 140 230 L 140 145 L 220 145 L 220 60 L 340 60"
-            stroke={colors.primary}
+            stroke={tint}
             strokeWidth="6"
             fill="none"
           />
@@ -82,8 +91,7 @@ export function PassengerMapPreview({
             {
               left: index === 0 ? "48%" : index === 1 ? "22%" : "57%",
               top: index === 0 ? "29%" : index === 1 ? "60%" : "67%",
-              backgroundColor:
-                place.kind === "stop" ? colors.surface : colors.primary,
+              backgroundColor: place.kind === "stop" ? colors.surface : tint,
               borderColor:
                 focusedKey === place.key ? colors.text : colors.surface,
               opacity: pressed ? 0.7 : 1,

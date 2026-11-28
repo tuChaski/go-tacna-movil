@@ -5,6 +5,8 @@
  * Centralizar los valores evita diferencias de paleta entre pantallas.
  */
 export const colors = {
+  navy: "#0F294A",
+  mint: "#A5E9CD",
   primary: "#2563EB",
   bg: "#F8FAFC",
   surface: "#FFFFFF",
@@ -45,9 +47,21 @@ export const touchTarget = { minWidth: 48, minHeight: 48 };
  */
 export const typography = {
   display: { fontSize: 32, lineHeight: 40, fontWeight: "700" as const },
-  title: { fontSize: 28, lineHeight: 36, fontWeight: "700" as const },
+  title: { fontSize: 24, lineHeight: 32, fontWeight: "700" as const },
   heading: { fontSize: 20, lineHeight: 28, fontWeight: "600" as const },
   body: { fontSize: 16, lineHeight: 24, fontWeight: "400" as const },
-  label: { fontSize: 16, lineHeight: 24, fontWeight: "600" as const },
-  small: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const },
+  label: { fontSize: 14, lineHeight: 20, fontWeight: "600" as const },
+  small: { fontSize: 13, lineHeight: 20, fontWeight: "400" as const },
 };
+
+/** El identificador contractual asigna el mismo acento al selector, mapa y ficha. */
+const lineColors = [
+  "#1D4ED8",
+  "#047857",
+  "#6D28D9",
+  "#C2410C",
+  "#0E7490",
+  "#BE185D",
+];
+export const routeColor = (id: number) =>
+  lineColors[Math.abs(id) % lineColors.length];

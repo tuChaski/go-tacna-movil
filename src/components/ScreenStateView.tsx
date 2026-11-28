@@ -47,7 +47,7 @@ export function ScreenStateView({
         {status === "loading" ? (
           <ActivityIndicator size="large" color={colors.primary} />
         ) : (
-          <AppIcon icon={Icon} size={32} />
+          <AppIcon icon={Icon} size={24} />
         )}
       </View>
       <AppText
@@ -69,24 +69,19 @@ export function ScreenStateView({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    gap: spacing.md,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: "center",
-    shadowColor: colors.text,
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
   },
   message: { color: colors.muted, textAlign: "center" },
   centered: { textAlign: "center" },
   action: { alignSelf: "stretch", marginTop: spacing.sm },
   iconHalo: {
-    width: 72,
-    height: 72,
+    width: 48,
+    height: 48,
     borderRadius: radius.full,
     backgroundColor: colors.infoBg,
     alignItems: "center",

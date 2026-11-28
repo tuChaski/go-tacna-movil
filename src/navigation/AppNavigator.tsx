@@ -12,8 +12,10 @@ export function AppNavigator() {
       <Stack.Screen name="passenger" />
       {/* Evita que el gesto de volver de iOS omita la confirmación local de la consola.
           Protege la interacción, pero no constituye una regla de autorización. */}
-      <Stack.Screen name="driver" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="ui-preview" />
+      <Stack.Protected guard={__DEV__}>
+        <Stack.Screen name="driver" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="ui-preview" />
+      </Stack.Protected>
     </Stack>
   );
 }

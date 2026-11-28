@@ -1,92 +1,147 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { useMemo, useState } from "react";
+import { FlatList, Pressable, TextInput, View } from "react-native";
+import Search from "lucide-react-native/icons/search";
+import X from "lucide-react-native/icons/x";
+import { AppIcon } from "../../../components/AppIcon";
 import { AppText } from "../../../components/AppText";
-import { colors, radius, spacing, touchTarget } from "../../../theme";
+import { colors, routeColor, touchTarget } from "../../../theme";
 import type { PreviewRoute } from "../data/passengerPreview";
 
-/**
- * Selector controlado: una pulsación comunica el id de la ruta y el padre aporta
- * `selectedId` en el siguiente renderizado. No confirma ni consulta servicios, así
- * la selección requiere una sola acción dentro del flujo del pasajero.
- * El modo compacto distribuye tarjetas pequeñas en filas y omite descripciones;
- * conserva nombres, estado accesible de selección y dimensiones táctiles mínimas.
- */
+/** Trata acentos, espacios y guiones como variantes de la misma búsqueda. */
+function normalize(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s-]+/g, "");
+}
+export function routeLabel(name: string) {
+  return name.replace(/^(?:línea|linea|ruta)\s+([\d][\w-]*)$/i, "$1");
+}
+type Choice = PreviewRoute & { companyName?: string };
+/** Filtra el catálogo en memoria conservando el orden original dentro de cada grupo. */
 export function RouteSelector({
   routes,
   selectedId,
   onSelect,
-  compact = false,
 }: {
-  routes: PreviewRoute[];
+  routes: Choice[];
   selectedId?: number;
   onSelect: (id: number) => void;
   compact?: boolean;
 }) {
+  const [query, setQuery] = useState("");
+  const results = useMemo(() => {
+    const term = normalize(query);
+    if (!term) return routes;
+    const exact: Choice[] = [],
+      partial: Choice[] = [];
+    for (const item of routes) {
+      const terms = [
+        item.label,
+        item.route.nombre_ruta,
+        item.companyName ?? "",
+      ].map(normalize);
+      if (terms.includes(term)) exact.push(item);
+      else if (terms.some((value) => value.includes(term))) partial.push(item);
+    }
+    return [...exact, ...partial];
+  }, [query, routes]);
   return (
-    <View style={[styles.list, compact && styles.compactList]}>
-      {routes.map(({ route, label, description }) => (
-        <Pressable
-          key={route.id}
-          accessibilityRole="button"
-          accessibilityLabel={`Seleccionar ${route.nombre_ruta}`}
-          accessibilityState={{ selected: selectedId === route.id }}
-          onPress={() => onSelect(route.id)}
-          style={({ pressed }) => [
-            styles.card,
-            compact && styles.compactCard,
-            {
-              borderColor:
-                selectedId === route.id ? colors.primary : colors.border,
-              backgroundColor: pressed ? colors.infoBg : colors.surface,
-            },
-          ]}
-        >
-          <View style={[styles.number, compact && { width: 32, height: 40 }]}>
-            <AppText variant="heading" style={{ color: colors.surface }}>
-              {label}
-            </AppText>
-          </View>
-          <View style={styles.copy}>
-            <AppText variant="label">{route.nombre_ruta}</AppText>
-            {!compact && (
-              <AppText variant="small" style={{ color: colors.muted }}>
-                {description}
-              </AppText>
-            )}
-          </View>
-          <AppText style={{ color: colors.primary }}>
-            {selectedId === route.id ? "✓" : "›"}
+    <View style={{ gap: 8 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 12,
+          paddingLeft: 14,
+        }}
+      >
+        <AppIcon icon={Search} size={18} color={colors.muted} />
+        <TextInput
+          placeholder="¿Qué ruta buscas?"
+          accessibilityLabel="Buscar ruta"
+          value={query}
+          onChangeText={setQuery}
+          placeholderTextColor={colors.muted}
+          style={{ flex: 1, minHeight: 48, color: colors.text, fontSize: 16 }}
+        />
+        {!!query && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Limpiar búsqueda"
+            style={{
+              ...touchTarget,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onPress={() => setQuery("")}
+          >
+            <AppIcon icon={X} />
+          </Pressable>
+        )}
+      </View>
+      {results.length ? (
+        <FlatList
+          horizontal
+          keyboardShouldPersistTaps="handled"
+          showsHorizontalScrollIndicator={false}
+          data={results}
+          extraData={selectedId}
+          keyExtractor={(item) => String(item.route.id)}
+          contentContainerStyle={{ gap: 8 }}
+          renderItem={({ item }) => {
+            const selected = selectedId === item.route.id;
+            const tint = routeColor(item.route.id);
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Seleccionar ${item.route.nombre_ruta}`}
+                accessibilityState={{ selected }}
+                onPress={() => onSelect(item.route.id)}
+                style={({ pressed }) => ({
+                  ...touchTarget,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingHorizontal: 14,
+                  borderRadius: 12,
+                  flexDirection: "row",
+                  gap: 7,
+                  backgroundColor: selected ? tint : colors.surface,
+                  borderWidth: 1,
+                  borderColor: selected ? tint : colors.border,
+                  opacity: pressed ? 0.72 : 1,
+                })}
+              >
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: selected ? "white" : tint,
+                  }}
+                />
+                <AppText
+                  variant="label"
+                  style={{ color: selected ? "white" : colors.navy }}
+                >
+                  {item.label}
+                </AppText>
+              </Pressable>
+            );
+          }}
+        />
+      ) : (
+        !!query && (
+          <AppText variant="small">
+            Ninguna línea coincide con tu búsqueda.
           </AppText>
-        </Pressable>
-      ))}
+        )
+      )}
     </View>
   );
 }
-const styles = StyleSheet.create({
-  list: { gap: spacing.sm },
-  compactList: { flexDirection: "row", flexWrap: "wrap" },
-  compactCard: {
-    flex: 1,
-    minWidth: 140,
-    minHeight: 72,
-    padding: spacing.sm,
-    gap: spacing.sm,
-  },
-  card: {
-    ...touchTarget,
-    flexDirection: "row",
-    alignItems: "center",
-    padding: spacing.md,
-    gap: spacing.md,
-    borderWidth: 2,
-    borderRadius: radius.lg,
-  },
-  number: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  copy: { flex: 1, gap: spacing.xs },
-});

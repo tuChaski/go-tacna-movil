@@ -35,25 +35,23 @@ test("la línea sigue siendo consultable sin geometría, paraderos ni GPS", asyn
       snapshot = listener as (data: ActiveUnits) => void;
     return () => {};
   });
-  jest
-    .mocked(passengerCatalogService.load)
-    .mockResolvedValue({
-      ok: true,
-      data: {
-        source: "network",
-        stale: false,
-        fetchedAt: 1,
-        routes: [
-          {
-            id: 2,
-            nombre_ruta: "Línea Sur",
-            activo: true,
-            empresa_id: 1,
-            trazado_ruta: null,
-          },
-        ],
-      },
-    });
+  jest.mocked(passengerCatalogService.load).mockResolvedValue({
+    ok: true,
+    data: {
+      source: "network",
+      stale: false,
+      fetchedAt: 1,
+      routes: [
+        {
+          id: 2,
+          nombre_ruta: "Línea Sur",
+          activo: true,
+          empresa_id: 1,
+          trazado_ruta: null,
+        },
+      ],
+    },
+  });
   const onBack = jest.fn();
   const view = await render(<PassengerLiveScreen active onBack={onBack} />);
   await fireEvent.press(await screen.findByLabelText("Seleccionar Línea Sur"));
@@ -74,6 +72,9 @@ test("la línea sigue siendo consultable sin geometría, paraderos ni GPS", asyn
         },
       ],
     }),
+  );
+  await fireEvent.press(
+    screen.getByRole("button", { name: "Ver unidades · 1" }),
   );
   await fireEvent.press(
     screen.getByRole("button", { name: "Micro 7 · moviendo" }),

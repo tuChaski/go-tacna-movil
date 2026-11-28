@@ -1,10 +1,11 @@
+import { ConfigurationNotice } from "../components/ConfigurationNotice";
 import { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ActionButton } from "../components/ActionButton";
-import { AppText } from "../components/AppText";
+
 import { screenStatuses, type ScreenStatus } from "../types/ui";
-import { colors, spacing } from "../theme";
+import { colors } from "../theme";
 import { PassengerHomeScreen } from "../features/passenger/screens/PassengerHomeScreen";
 import { DriverConsoleScreen } from "../features/driver/screens/DriverConsoleScreen";
 
@@ -21,58 +22,90 @@ const labels: Record<ScreenStatus, string> = {
  * Galería interna para revisar ambos flujos con escenarios visuales controlados.
  * Recuperar cambia el estado local a ready; no reconecta servicios ni concede
  * permisos nativos. `onBack` sale de la galería mediante el adaptador de ruta.
- * La bienvenida muestra el acceso durante desarrollo como ayuda; ocultarlo no
- * constituye una regla de autenticación o autorización para esta ruta.
+ * Expo Router protege esta galería en producción. El menú de desarrollo permite abrirla.
  */
 export function PreviewScreen({ onBack }: { onBack: () => void }) {
   const [flow, setFlow] = useState<"passenger" | "driver">("passenger");
   const [status, setStatus] = useState<ScreenStatus>("ready");
+  const [controls, setControls] = useState(false);
+  const [full, setFull] = useState(false);
   const Screen =
     flow === "passenger" ? PassengerHomeScreen : DriverConsoleScreen;
   return (
-    <View style={styles.root}>
-      <SafeAreaView edges={["top"]} style={styles.controls}>
-        <AppText variant="label">Revisión interna de interfaz</AppText>
-        <ScrollView horizontal contentContainerStyle={styles.row}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+      {!full && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            flexWrap: "wrap",
+            paddingHorizontal: 12,
+            gap: 4,
+          }}
+        >
           <ActionButton
-            title="Pasajero"
-            onPress={() => setFlow("passenger")}
-            variant={flow === "passenger" ? "primary" : "outline"}
+            variant="text"
+            title={
+              full
+                ? "Controles"
+                : `${flow === "driver" ? "Conductor" : "Pasajero"} · ${labels[status]} ▾`
+            }
+            onPress={() => {
+              setFull(false);
+              setControls(!controls);
+            }}
           />
+          {!full && (
+            <ActionButton variant="text" title="Cerrar" onPress={onBack} />
+          )}
+        </View>
+      )}
+      {controls && !full && (
+        <ScrollView
+          style={{ maxHeight: "45%" }}
+          contentContainerStyle={{ padding: 12, gap: 4 }}
+        >
+          <ConfigurationNotice />
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+            {(["passenger", "driver"] as const).map((key) => (
+              <ActionButton
+                key={key}
+                title={key === "driver" ? "Conductor" : "Pasajero"}
+                variant={key === flow ? "primary" : "outline"}
+                onPress={() => setFlow(key)}
+              />
+            ))}
+          </View>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+            {screenStatuses.map((item) => (
+              <ActionButton
+                key={item}
+                title={labels[item]}
+                variant={status === item ? "primary" : "outline"}
+                onPress={() => {
+                  setStatus(item);
+                  setControls(false);
+                }}
+              />
+            ))}
+          </View>
           <ActionButton
-            title="Conductor"
-            onPress={() => setFlow("driver")}
-            variant={flow === "driver" ? "primary" : "outline"}
-          />
-          <ActionButton
-            title="Salir de revisión"
-            onPress={onBack}
-            variant="outline"
+            variant="secondary"
+            title="Pantalla completa"
+            onPress={() => {
+              setFull(true);
+              setControls(false);
+            }}
           />
         </ScrollView>
-        <ScrollView horizontal contentContainerStyle={styles.row}>
-          {screenStatuses.map((item) => (
-            <ActionButton
-              key={item}
-              title={labels[item]}
-              onPress={() => setStatus(item)}
-              variant={status === item ? "primary" : "outline"}
-            />
-          ))}
-        </ScrollView>
-      </SafeAreaView>
-      {/* Cambiar de flujo vuelve a montar la pantalla y libera su estado y temporizador.
-          Cambiar de escenario los conserva para revisar un recorrido activo sin red. */}
-      <Screen key={flow} status={status} onRecover={() => setStatus("ready")} />
-    </View>
+      )}
+      <Screen
+        onBack={full ? () => setFull(false) : undefined}
+        embedded
+        key={flow}
+        status={status}
+        onRecover={() => setStatus("ready")}
+      />
+    </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  controls: {
-    padding: spacing.compact,
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-  },
-  row: { gap: spacing.sm },
-});

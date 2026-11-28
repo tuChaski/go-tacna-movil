@@ -4,3 +4,6 @@ jest.mock("react-native-safe-area-context", () => {
   const mock = jest.requireActual("react-native-safe-area-context/jest/mock");
   return mock.default;
 });
+
+// Jest no dispone del módulo nativo que lee la preferencia de movimiento.
+jest.mock("react-native-reanimated", () => ({ useReducedMotion: () => true }));
