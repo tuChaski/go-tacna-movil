@@ -54,7 +54,7 @@ export default function Register() {
                 <Text style={s.subtitle}>
                     {hasErrors
                         ? 'Tu ciudad, a un recorrido de distancia.'
-                        : 'Crea tu cuenta de pasajero en Go Tacna.'}
+                        : 'Demo de registro. Usa datos ficticios para probar el formulario.'}
                 </Text>
 
                 {hasErrors && <AlertBox variant="error" title="Revisa tus datos" />}

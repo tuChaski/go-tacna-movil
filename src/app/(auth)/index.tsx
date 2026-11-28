@@ -49,11 +49,11 @@ export default function Welcome() {
             onPress={() => router.push(appRoutes.passenger)}
           />
           <Button
-            title="Iniciar sesión"
+            title="Ver demo de inicio de sesión"
             onPress={() => router.push("/login")}
           />
           <Button
-            title="Crear cuenta"
+            title="Ver demo de registro"
             variant="outline"
             onPress={() => router.push("/register")}
           />
@@ -72,7 +72,8 @@ export default function Welcome() {
         </View>
 
         <Text style={s.footer}>
-          El registro público es exclusivo para pasajeros.
+          Puedes consultar el mapa como invitado. Las cuentas de pasajero aún
+          están en desarrollo.
         </Text>
       </ScrollView>
     </SafeAreaView>
